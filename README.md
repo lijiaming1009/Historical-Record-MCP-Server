@@ -71,21 +71,21 @@ npm start
 
 ```mermaid
 graph TD
-    subgraph "Client Environment"
-        A["Kilo Code UI / Client"]
+    subgraph "客户端环境"
+        A["Kilo Code 界面 / 客户端"]
     end
 
-    subgraph "MCP Infrastructure"
-        B["MCP Core / Caller"]
+    subgraph "MCP 基础设施"
+        B["MCP 核心 / 调用方"]
     end
 
-    subgraph "historical-record MCP Server"
-        C["Node.js Process"]
-        D["Tools (add/get)"]
-        E["lowdb (db.json)"]
+    subgraph "历史记录 MCP 服务"
+        C["Node.js 进程"]
+        D["工具 (添加/查询)"]
+        E["数据库 (db.json)"]
     end
 
-    A -- "1. 调用工具 (Invoke tool)" --> B
+    A -- "1. 调用工具" --> B
     B -- "2. 转发请求 (stdio)" --> C
     C -- "3. 执行工具逻辑" --> D
     D -- "4. 访问数据" --> E
@@ -93,6 +93,13 @@ graph TD
     D -- "6. 返回结果" --> C
     C -- "7. 发送响应 (stdio)" --> B
     B -- "8. 返回最终结果" --> A
+
+    %% 样式定义
+    style A fill:#cde4ff,stroke:#99c7ff,stroke-width:2px
+    style B fill:#d5f5d5,stroke:#a3e0a3,stroke-width:2px
+    style C fill:#ffeacc,stroke:#ffca80,stroke-width:2px
+    style D fill:#ffeacc,stroke:#ffca80,stroke-width:2px
+    style E fill:#ffdddd,stroke:#ffb3b3,stroke-width:2px
 ```
 
 ## 5. 📖 API 参考
