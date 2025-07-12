@@ -71,18 +71,18 @@ npm start
 
 ```mermaid
 graph TD
-    subgraph Client Environment
-        A[Kilo Code UI / Client]
+    subgraph "Client Environment"
+        A["Kilo Code UI / Client"]
     end
 
-    subgraph MCP Infrastructure
-        B[MCP Core / Caller]
+    subgraph "MCP Infrastructure"
+        B["MCP Core / Caller"]
     end
 
-    subgraph historical-record MCP Server
-        C[Node.js Process]
-        D[Tools (add/get)]
-        E[lowdb (db.json)]
+    subgraph "historical-record MCP Server"
+        C["Node.js Process"]
+        D["Tools (add/get)"]
+        E["lowdb (db.json)"]
     end
 
     A -- "1. 调用工具 (Invoke tool)" --> B
