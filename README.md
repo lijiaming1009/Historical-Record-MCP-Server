@@ -93,13 +93,6 @@ graph TD
     D -- "6. 返回结果" --> C
     C -- "7. 发送响应 (stdio)" --> B
     B -- "8. 返回最终结果" --> A
-
-    %% 样式定义
-    style A fill:#cde4ff,stroke:#99c7ff,stroke-width:2px
-    style B fill:#d5f5d5,stroke:#a3e0a3,stroke-width:2px
-    style C fill:#ffeacc,stroke:#ffca80,stroke-width:2px
-    style D fill:#ffeacc,stroke:#ffca80,stroke-width:2px
-    style E fill:#ffdddd,stroke:#ffb3b3,stroke-width:2px
 ```
 
 ## 5. 📖 API 参考
