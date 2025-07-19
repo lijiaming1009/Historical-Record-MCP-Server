@@ -1,100 +1,51 @@
-import { Low } from "lowdb";
-import { JSONFile } from "lowdb/node";
-import { z } from "zod";
-import { v4 as uuidv4 } from "uuid";
 import readline from "readline";
-const adapter = new JSONFile('db.json');
-const db = new Low(adapter, { records: [] });
-// --- Tool Schemas and Types ---
-const addRecordInputSchema = z.object({
-    content: z.any(),
-});
-const getRecordsInputSchema = z.object({
-    page: z.number().optional().default(1),
-    limit: z.number().optional().default(20),
-    startDate: z.string().optional(),
-    endDate: z.string().optional(),
-    keyword: z.string().optional(),
-    export: z.boolean().optional().default(false),
-});
-// --- Tool Implementations ---
-const tools = {
-    add_historical_record: {
-        description: "Adds a new historical record.",
-        input: addRecordInputSchema,
-        run: async (input) => {
-            const newRecord = {
-                id: uuidv4(),
-                timestamp: new Date().toISOString(),
-                content: input.content,
-            };
-            db.data.records.unshift(newRecord);
-            await db.write();
-            return { success: true, id: newRecord.id };
-        },
-    },
-    get_historical_records: {
-        description: "Retrieves historical records with optional filtering and pagination.",
-        input: getRecordsInputSchema,
-        run: async (input) => {
-            let records = [...db.data.records];
-            if (input.startDate) {
-                records = records.filter(r => new Date(r.timestamp) >= new Date(input.startDate));
-            }
-            if (input.endDate) {
-                records = records.filter(r => new Date(r.timestamp) <= new Date(input.endDate));
-            }
-            if (input.keyword) {
-                const keyword = input.keyword.toLowerCase();
-                records = records.filter(r => JSON.stringify(r.content).toLowerCase().includes(keyword));
-            }
-            if (input.export) {
-                return records;
-            }
-            const startIndex = (input.page - 1) * input.limit;
-            const endIndex = startIndex + input.limit;
-            const paginatedRecords = records.slice(startIndex, endIndex);
-            return {
-                page: input.page,
-                limit: input.limit,
-                total: records.length,
-                data: paginatedRecords,
-            };
-        },
-    },
-};
-// --- Basic MCP Communication Layer ---
+import { tools } from "./tools.js";
+/**
+ * The main entry point for the MCP server.
+ * This function sets up and runs the communication layer to handle tool requests.
+ */
 async function main() {
-    await db.read();
     const rl = readline.createInterface({
         input: process.stdin,
         output: process.stdout,
         terminal: false,
     });
+    // 1. Announce server information to the client.
     const serverInfo = {
         name: "historical-record",
-        version: "0.1.0",
+        version: "1.0.0", // Updated version
         tools: Object.fromEntries(Object.entries(tools).map(([name, { description, input }]) => [
             name,
-            { description, input: input.describe("") },
+            { description, input: input.describe(description) }, // Use description for better context
         ])),
     };
     console.log(JSON.stringify(serverInfo));
+    // 2. Listen for incoming requests from the client.
     rl.on("line", async (line) => {
         try {
             const request = JSON.parse(line);
             const tool = tools[request.tool];
-            if (tool) {
-                const result = await tool.run(request.input);
-                console.log(JSON.stringify({ id: request.id, result }));
-            }
-            else {
+            if (!tool) {
                 console.log(JSON.stringify({ id: request.id, error: `Tool not found: ${request.tool}` }));
+                return;
             }
+            // 3. Validate the input for the requested tool.
+            const validationResult = tool.input.safeParse(request.input);
+            if (!validationResult.success) {
+                console.log(JSON.stringify({ id: request.id, error: "Invalid input", details: validationResult.error.format() }));
+                return;
+            }
+            // 4. Run the tool and send back the result.
+            const result = await tool.run(validationResult.data);
+            console.log(JSON.stringify({ id: request.id, result }));
         }
         catch (error) {
-            console.log(JSON.stringify({ error: "Invalid request" }));
+            // Handle cases of malformed JSON requests.
+            console.log(JSON.stringify({ error: "Invalid request format." }));
         }
     });
 }
-main().catch(console.error);
+main().catch(error => {
+    console.error("A fatal error occurred:", error);
+    process.exit(1);
+});
